@@ -7,7 +7,7 @@ import {
 import { useSounds } from './useSounds'
 import { WIN_PROGRESS, STRING_HEIGHT } from './raceConfig'
 import RaceTrack from './RaceTrack'
-import CommentaryFeed from './CommentaryFeed'
+import CommentaryWithAdam from './CommentaryWithAdam'
 import WinnerScreen from './WinnerScreen'
 
 const PHASE = {
@@ -264,7 +264,7 @@ export default function WoollyWormRace() {
             </div>
           )}
           <RaceTrack racers={RACERS} positions={positions} winner={winner} />
-          <CommentaryFeed lines={commentary} />
+          <CommentaryWithAdam lines={commentary} />
         </div>
       )}
 
