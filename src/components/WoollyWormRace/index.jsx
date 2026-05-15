@@ -1,28 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { RACERS } from './racers'
 import {
-  INTRO_LINES, START_LINES, EARLY_LEAD_LINES, MID_RACE_LINES,
+  START_LINES, EARLY_LEAD_LINES, MID_RACE_LINES,
   LEAD_CHANGE_LINES, FINAL_STRETCH_LINES, WINNER_LINES, pickLine,
 } from './commentary'
+import { useSounds } from './useSounds'
 import RaceTrack from './RaceTrack'
 import CommentaryFeed from './CommentaryFeed'
 import WinnerScreen from './WinnerScreen'
 
 // Race phases
 const PHASE = {
-  INTRO: 'intro',      // pre-race lineup screen
-  COUNTDOWN: 'countdown', // "On your mark..."
-  RACING: 'racing',    // worms climbing
-  FINISHED: 'finished', // winner screen
+  INTRO: 'intro',
+  COUNTDOWN: 'countdown',
+  RACING: 'racing',
+  FINISHED: 'finished',
 }
 
-// Generate a random "speed profile" for a worm — list of small increments over time
-// Pure random outcome — no weighting
+// Generate a random "speed profile" for a worm.
+// Pure random outcome — equal odds for every worm, every race.
 function generateRaceProfile() {
-  const steps = 60 // ~12 seconds at ~5 ticks/sec
+  const steps = 60 // ~12 seconds at 5 ticks/sec
   let pos = 0
   return Array.from({ length: steps }, () => {
-    const inc = Math.random() * 0.028 + 0.004 // jittery: 0.4%–3.2% per tick
+    const inc = Math.random() * 0.028 + 0.004
     pos = Math.min(1, pos + inc)
     return pos
   })
@@ -42,12 +43,14 @@ export default function WoollyWormRace() {
   const commentaryIntervalRef = useRef(null)
   const prevLeaderRef = useRef(null)
 
+  const { playCountdown, startCrowd, stopCrowd, playWinner, toggleMute, muted } = useSounds()
+
   const addComment = useCallback((line) => {
-    setCommentary((prev) => [...prev.slice(-40), line]) // keep last 40 lines
+    setCommentary((prev) => [...prev.slice(-40), line])
   }, [])
 
   function startRace() {
-    // Reset
+    // Reset state
     const zeros = RACERS.map(() => 0)
     setPositions(zeros)
     positionsRef.current = zeros
@@ -56,10 +59,11 @@ export default function WoollyWormRace() {
     tickRef.current = 0
     prevLeaderRef.current = null
 
-    // Generate fresh random profiles for this race
     profilesRef.current = RACERS.map(() => generateRaceProfile())
-
     setPhase(PHASE.COUNTDOWN)
+
+    // Sounds — called inside the button click handler (user gesture) for iOS
+    playCountdown()
 
     const steps = ['On your mark...', 'Get set...', '🐛 GO! 🐛']
     let i = 0
@@ -74,6 +78,7 @@ export default function WoollyWormRace() {
         clearInterval(cdInterval)
         setCountdownText('')
         setPhase(PHASE.RACING)
+        startCrowd()
         runRace()
       }
     }, 900)
@@ -82,7 +87,6 @@ export default function WoollyWormRace() {
   function runRace() {
     addComment(pickLine(EARLY_LEAD_LINES, { leader: RACERS[0].wormName }))
 
-    // Tick positions every ~200ms (5 ticks/sec over ~12 seconds)
     raceIntervalRef.current = setInterval(() => {
       const tick = tickRef.current
       tickRef.current = tick + 1
@@ -94,38 +98,35 @@ export default function WoollyWormRace() {
         const newPos = profiles.map((profile) => profile[Math.min(tick, profile.length - 1)] ?? 1)
         positionsRef.current = newPos
 
-        // Check for winner
         const done = newPos.some((p) => p >= 1)
         if (done) {
           clearInterval(raceIntervalRef.current)
           clearInterval(commentaryIntervalRef.current)
 
-          // Winner = first to reach 1.0, or highest if tie
           const winIdx = newPos.indexOf(Math.max(...newPos))
           const w = RACERS[winIdx]
           setWinner(w)
-
           addComment(pickLine(WINNER_LINES, { winner: w.wormName, kid: w.kid }))
 
-          setTimeout(() => setPhase(PHASE.FINISHED), 1200)
+          // Short delay then play winner horn + show screen
+          setTimeout(() => {
+            playWinner()
+            setPhase(PHASE.FINISHED)
+          }, 600)
         }
 
         return newPos
       })
     }, 200)
 
-    // Commentary every 1.5–2.5 seconds — reads from ref to avoid stale closures
     commentaryIntervalRef.current = setInterval(() => {
       const currentPos = positionsRef.current
       const leaderIdx = currentPos.indexOf(Math.max(...currentPos))
       const leader = RACERS[leaderIdx]
-
-      // Pick a random challenger (not the leader)
       const others = RACERS.filter((_, i) => i !== leaderIdx)
       const challenger = others[Math.floor(Math.random() * others.length)]
 
       if (prevLeaderRef.current && prevLeaderRef.current !== leader.id) {
-        // Lead change!
         addComment(pickLine(LEAD_CHANGE_LINES, {
           worm: leader.wormName,
           leader: prevLeaderRef.current,
@@ -145,7 +146,6 @@ export default function WoollyWormRace() {
           }))
         }
       }
-
       prevLeaderRef.current = leader.id
     }, 1800 + Math.random() * 700)
   }
@@ -153,6 +153,7 @@ export default function WoollyWormRace() {
   function reset() {
     clearInterval(raceIntervalRef.current)
     clearInterval(commentaryIntervalRef.current)
+    stopCrowd()
     const zeros = RACERS.map(() => 0)
     positionsRef.current = zeros
     setPositions(zeros)
@@ -162,27 +163,37 @@ export default function WoollyWormRace() {
     tickRef.current = 0
   }
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearInterval(raceIntervalRef.current)
       clearInterval(commentaryIntervalRef.current)
+      stopCrowd()
     }
   }, [])
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
-      {/* Section header */}
-      <div className="text-center">
-        <h2 className="font-display text-2xl md:text-3xl font-bold text-[#D97706]">
-          🐛 The Woolly Worm Race
-        </h2>
-        <p className="text-[#78350F] text-sm mt-1">
-          Six worms. One string. One champion.
-        </p>
+      {/* Section header + mute toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-[#C2410C]">
+            🐛 The Woolly Worm Race
+          </h2>
+          <p className="text-[#78350F] text-sm mt-0.5">
+            Six worms. One string. One champion.
+          </p>
+        </div>
+        <button
+          onClick={toggleMute}
+          className="text-xl p-2 rounded-lg hover:bg-[#78350F]/20 transition-colors"
+          title={muted ? 'Unmute sounds' : 'Mute sounds'}
+          aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
       </div>
 
-      {/* INTRO PHASE */}
+      {/* INTRO */}
       {phase === PHASE.INTRO && (
         <div className="space-y-4">
           <div className="bg-[#2A1F14] border-2 border-[#78350F] rounded-xl p-4 text-center">
@@ -192,7 +203,6 @@ export default function WoollyWormRace() {
             </p>
           </div>
 
-          {/* Racer lineup */}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {RACERS.map((racer) => (
               <div key={racer.id} className="flex flex-col items-center gap-1 p-2 bg-[#2A1F14] border border-[#78350F] rounded-lg">
@@ -230,37 +240,25 @@ export default function WoollyWormRace() {
         </div>
       )}
 
-      {/* COUNTDOWN / RACING PHASE */}
+      {/* COUNTDOWN / RACING */}
       {(phase === PHASE.COUNTDOWN || phase === PHASE.RACING) && (
         <div className="space-y-4">
           {countdownText && (
             <div className="text-center py-2">
-              <span className="font-display text-3xl font-bold text-[#D97706] animate-bounce-in">
+              <span className="font-display text-3xl font-bold text-[#C2410C] animate-bounce-in">
                 {countdownText}
               </span>
             </div>
           )}
-
-          <RaceTrack
-            racers={RACERS}
-            positions={positions}
-            phase={phase}
-            winner={winner}
-          />
-
+          <RaceTrack racers={RACERS} positions={positions} phase={phase} winner={winner} />
           <CommentaryFeed lines={commentary} />
         </div>
       )}
 
-      {/* FINISHED PHASE */}
+      {/* FINISHED */}
       {phase === PHASE.FINISHED && winner && (
         <div className="space-y-4">
-          <RaceTrack
-            racers={RACERS}
-            positions={positions}
-            phase={phase}
-            winner={winner}
-          />
+          <RaceTrack racers={RACERS} positions={positions} phase={phase} winner={winner} />
           <WinnerScreen winner={winner} onReset={reset} />
         </div>
       )}
