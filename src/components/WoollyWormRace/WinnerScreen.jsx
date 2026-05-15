@@ -66,11 +66,11 @@ export default function WinnerScreen({ winner, onReset }) {
         <h2 className="font-display text-3xl md:text-4xl font-bold text-[#D97706] leading-tight">
           {winner.wormName}
         </h2>
-        <p className="text-[#FEF3C7] mt-1 text-lg">
+        <p className="text-[#2A2118] mt-1 text-lg font-medium">
           Wins the 2026 Family Trip Race!
         </p>
-        <p className="text-[#78350F] text-sm mt-1">
-          Worm raced by: <span className="text-[#D97706] font-semibold">{winner.kid}</span>
+        <p className="text-[#5C3A1E] text-sm mt-1">
+          Worm raced by: <span className="text-[#C2410C] font-semibold">{winner.kid}</span>
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export default function WinnerScreen({ winner, onReset }) {
 
       <button
         onClick={onReset}
-        className="bg-[#2A1F14] border-2 border-[#D97706] hover:bg-[#D97706] hover:text-[#1C1410] text-[#D97706] font-bold py-3 px-8 rounded-xl transition-all text-lg font-display"
+        className="bg-[#C2410C] hover:bg-[#B91C1C] text-white font-bold py-3 px-8 rounded-xl transition-all text-lg font-display shadow-md"
       >
         🐛 Race Again
       </button>

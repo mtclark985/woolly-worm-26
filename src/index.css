@@ -15,8 +15,8 @@
 
 body {
   font-family: var(--font-body);
-  background-color: #1C1410;
-  color: #FEF3C7;
+  background-color: #F5EAD7; /* warm cream fallback */
+  color: #2A2118;
   margin: 0;
   -webkit-font-smoothing: antialiased;
 }

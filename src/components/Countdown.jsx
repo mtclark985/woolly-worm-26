@@ -24,7 +24,7 @@ function Unit({ value, label }) {
           {String(value).padStart(2, '0')}
         </span>
       </div>
-      <span className="text-[#78350F] text-xs mt-1 uppercase tracking-wider font-medium">
+      <span className="text-[#5C3A1E] text-xs mt-1 uppercase tracking-wider font-medium">
         {label}
       </span>
     </div>
@@ -42,7 +42,7 @@ export default function Countdown() {
   if (!timeLeft) {
     return (
       <div className="text-center py-4">
-        <p className="font-display text-2xl text-[#D97706] font-bold animate-bounce">
+        <p className="font-display text-2xl text-[#C2410C] font-bold animate-bounce">
           🐛 The festival is HERE! 🐛
         </p>
       </div>
@@ -51,7 +51,7 @@ export default function Countdown() {
 
   return (
     <div className="text-center">
-      <p className="text-[#D97706] text-sm uppercase tracking-widest font-medium mb-3">
+      <p className="text-[#C2410C] text-sm uppercase tracking-widest font-medium mb-3">
         Countdown to Woolly Worm Fest
       </p>
       <div className="flex items-end justify-center gap-3">
@@ -63,7 +63,7 @@ export default function Countdown() {
         <span className="font-display text-3xl text-[#D97706] mb-4 font-bold">:</span>
         <Unit value={timeLeft.seconds} label="sec" />
       </div>
-      <p className="text-[#78350F] text-xs mt-2">Oct 17–18, 2026 · Banner Elk, NC</p>
+      <p className="text-[#5C3A1E] text-xs mt-2">Oct 17–18, 2026 · Banner Elk, NC</p>
     </div>
   )
 }
