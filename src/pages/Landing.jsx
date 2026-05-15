@@ -19,7 +19,7 @@ export default function Landing() {
 
           <h1 className="font-display font-bold text-[#FEF3C7] leading-tight mb-2" style={{ fontSize: 'clamp(1.75rem, 6vw, 3rem)' }}>
             {/* TODO: Replace "[Your Family Name]" with your actual group name */}
-            [Ms Eddie's Fan Club] Goes to<br />
+            Ms Eddie's Fan Club Goes to<br />
             <span className="text-[#D97706]">Woolly Worm Fest 2026</span>
           </h1>
 
