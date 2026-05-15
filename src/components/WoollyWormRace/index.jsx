@@ -37,6 +37,7 @@ export default function WoollyWormRace() {
 
   const profilesRef = useRef(null)
   const tickRef = useRef(0)
+  const positionsRef = useRef(RACERS.map(() => 0))
   const raceIntervalRef = useRef(null)
   const commentaryIntervalRef = useRef(null)
   const prevLeaderRef = useRef(null)
@@ -47,7 +48,9 @@ export default function WoollyWormRace() {
 
   function startRace() {
     // Reset
-    setPositions(RACERS.map(() => 0))
+    const zeros = RACERS.map(() => 0)
+    setPositions(zeros)
+    positionsRef.current = zeros
     setCommentary([])
     setWinner(null)
     tickRef.current = 0
@@ -89,6 +92,7 @@ export default function WoollyWormRace() {
         if (!profiles) return RACERS.map(() => 0)
 
         const newPos = profiles.map((profile) => profile[Math.min(tick, profile.length - 1)] ?? 1)
+        positionsRef.current = newPos
 
         // Check for winner
         const done = newPos.some((p) => p >= 1)
@@ -97,7 +101,7 @@ export default function WoollyWormRace() {
           clearInterval(commentaryIntervalRef.current)
 
           // Winner = first to reach 1.0, or highest if tie
-          let winIdx = newPos.indexOf(Math.max(...newPos))
+          const winIdx = newPos.indexOf(Math.max(...newPos))
           const w = RACERS[winIdx]
           setWinner(w)
 
@@ -110,49 +114,49 @@ export default function WoollyWormRace() {
       })
     }, 200)
 
-    // Commentary every 1.5–2.5 seconds
+    // Commentary every 1.5–2.5 seconds — reads from ref to avoid stale closures
     commentaryIntervalRef.current = setInterval(() => {
-      setPositions((currentPos) => {
-        const leaderIdx = currentPos.indexOf(Math.max(...currentPos))
-        const leader = RACERS[leaderIdx]
+      const currentPos = positionsRef.current
+      const leaderIdx = currentPos.indexOf(Math.max(...currentPos))
+      const leader = RACERS[leaderIdx]
 
-        // Pick a random challenger (not the leader)
-        const others = RACERS.filter((_, i) => i !== leaderIdx)
-        const challenger = others[Math.floor(Math.random() * others.length)]
+      // Pick a random challenger (not the leader)
+      const others = RACERS.filter((_, i) => i !== leaderIdx)
+      const challenger = others[Math.floor(Math.random() * others.length)]
 
-        if (prevLeaderRef.current && prevLeaderRef.current !== leader.id) {
-          // Lead change!
-          addComment(pickLine(LEAD_CHANGE_LINES, {
-            worm: leader.wormName,
-            leader: prevLeaderRef.current,
-          }))
+      if (prevLeaderRef.current && prevLeaderRef.current !== leader.id) {
+        // Lead change!
+        addComment(pickLine(LEAD_CHANGE_LINES, {
+          worm: leader.wormName,
+          leader: prevLeaderRef.current,
+        }))
+      } else {
+        const max = Math.max(...currentPos)
+        if (max > 0.8) {
+          addComment(pickLine(FINAL_STRETCH_LINES))
         } else {
-          const max = Math.max(...currentPos)
-          if (max > 0.8) {
-            addComment(pickLine(FINAL_STRETCH_LINES))
-          } else {
-            const randomWorm = RACERS[Math.floor(Math.random() * RACERS.length)]
-            addComment(pickLine(MID_RACE_LINES, {
-              worm: randomWorm.wormName,
-              leader: leader.wormName,
-              worm1: leader.wormName,
-              worm2: challenger.wormName,
-              lane: leaderIdx + 1,
-            }))
-          }
+          const randomWorm = RACERS[Math.floor(Math.random() * RACERS.length)]
+          addComment(pickLine(MID_RACE_LINES, {
+            worm: randomWorm.wormName,
+            leader: leader.wormName,
+            worm1: leader.wormName,
+            worm2: challenger.wormName,
+            lane: leaderIdx + 1,
+          }))
         }
+      }
 
-        prevLeaderRef.current = leader.id
-        return currentPos // don't modify positions here — just for reading
-      })
+      prevLeaderRef.current = leader.id
     }, 1800 + Math.random() * 700)
   }
 
   function reset() {
     clearInterval(raceIntervalRef.current)
     clearInterval(commentaryIntervalRef.current)
+    const zeros = RACERS.map(() => 0)
+    positionsRef.current = zeros
+    setPositions(zeros)
     setPhase(PHASE.INTRO)
-    setPositions(RACERS.map(() => 0))
     setCommentary([])
     setWinner(null)
     tickRef.current = 0
