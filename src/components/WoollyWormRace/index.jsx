@@ -5,11 +5,11 @@ import {
   LEAD_CHANGE_LINES, FINAL_STRETCH_LINES, WINNER_LINES, pickLine,
 } from './commentary'
 import { useSounds } from './useSounds'
+import { WIN_PROGRESS, STRING_HEIGHT } from './raceConfig'
 import RaceTrack from './RaceTrack'
 import CommentaryFeed from './CommentaryFeed'
 import WinnerScreen from './WinnerScreen'
 
-// Race phases
 const PHASE = {
   INTRO: 'intro',
   COUNTDOWN: 'countdown',
@@ -17,14 +17,15 @@ const PHASE = {
   FINISHED: 'finished',
 }
 
-// Generate a random "speed profile" for a worm.
-// Pure random outcome — equal odds for every worm, every race.
+// Generate a random speed profile for one worm.
+// Steps are pre-computed so win detection just reads an array — frame-rate independent.
+// Progress is capped at WIN_PROGRESS (head at finish line) rather than 1.0.
 function generateRaceProfile() {
-  const steps = 60 // ~12 seconds at 5 ticks/sec
+  const steps = 80  // plenty of steps; race ends when head hits the line, not at step 80
   let pos = 0
   return Array.from({ length: steps }, () => {
-    const inc = Math.random() * 0.028 + 0.004
-    pos = Math.min(1, pos + inc)
+    const inc = Math.random() * 0.028 + 0.004  // 0.4%–3.2% per tick (jittery)
+    pos = Math.min(WIN_PROGRESS, pos + inc)     // cap at finish line, not 1.0
     return pos
   })
 }
@@ -39,6 +40,7 @@ export default function WoollyWormRace() {
   const profilesRef = useRef(null)
   const tickRef = useRef(0)
   const positionsRef = useRef(RACERS.map(() => 0))
+  const raceFinishedRef = useRef(false)   // freeze flag — set true the moment a winner is found
   const raceIntervalRef = useRef(null)
   const commentaryIntervalRef = useRef(null)
   const prevLeaderRef = useRef(null)
@@ -50,10 +52,10 @@ export default function WoollyWormRace() {
   }, [])
 
   function startRace() {
-    // Reset state
     const zeros = RACERS.map(() => 0)
     setPositions(zeros)
     positionsRef.current = zeros
+    raceFinishedRef.current = false
     setCommentary([])
     setWinner(null)
     tickRef.current = 0
@@ -61,9 +63,7 @@ export default function WoollyWormRace() {
 
     profilesRef.current = RACERS.map(() => generateRaceProfile())
     setPhase(PHASE.COUNTDOWN)
-
-    // Sounds — called inside the button click handler (user gesture) for iOS
-    playCountdown()
+    playCountdown()  // inside user-gesture handler — satisfies iOS AudioContext requirement
 
     const steps = ['On your mark...', 'Get set...', '🐛 GO! 🐛']
     let i = 0
@@ -88,18 +88,27 @@ export default function WoollyWormRace() {
     addComment(pickLine(EARLY_LEAD_LINES, { leader: RACERS[0].wormName }))
 
     raceIntervalRef.current = setInterval(() => {
+      // If already finished (e.g. this tick fired before clearInterval took effect), do nothing
+      if (raceFinishedRef.current) return
+
       const tick = tickRef.current
       tickRef.current = tick + 1
 
       setPositions(() => {
-        const profiles = profilesRef.current
-        if (!profiles) return RACERS.map(() => 0)
+        if (raceFinishedRef.current) return positionsRef.current  // frozen
 
-        const newPos = profiles.map((profile) => profile[Math.min(tick, profile.length - 1)] ?? 1)
+        const profiles = profilesRef.current
+        if (!profiles) return positionsRef.current
+
+        const newPos = profiles.map(
+          (profile) => profile[Math.min(tick, profile.length - 1)] ?? WIN_PROGRESS
+        )
         positionsRef.current = newPos
 
-        const done = newPos.some((p) => p >= 1)
+        // Win condition: any worm's head has reached or crossed the finish line
+        const done = newPos.some((p) => p >= WIN_PROGRESS)
         if (done) {
+          raceFinishedRef.current = true  // freeze immediately — no more updates
           clearInterval(raceIntervalRef.current)
           clearInterval(commentaryIntervalRef.current)
 
@@ -108,11 +117,10 @@ export default function WoollyWormRace() {
           setWinner(w)
           addComment(pickLine(WINNER_LINES, { winner: w.wormName, kid: w.kid }))
 
-          // Short delay then play winner horn + show screen
           setTimeout(() => {
             playWinner()
             setPhase(PHASE.FINISHED)
-          }, 600)
+          }, 500)
         }
 
         return newPos
@@ -120,6 +128,7 @@ export default function WoollyWormRace() {
     }, 200)
 
     commentaryIntervalRef.current = setInterval(() => {
+      if (raceFinishedRef.current) return
       const currentPos = positionsRef.current
       const leaderIdx = currentPos.indexOf(Math.max(...currentPos))
       const leader = RACERS[leaderIdx]
@@ -133,7 +142,7 @@ export default function WoollyWormRace() {
         }))
       } else {
         const max = Math.max(...currentPos)
-        if (max > 0.8) {
+        if (max > WIN_PROGRESS * 0.85) {
           addComment(pickLine(FINAL_STRETCH_LINES))
         } else {
           const randomWorm = RACERS[Math.floor(Math.random() * RACERS.length)]
@@ -154,6 +163,7 @@ export default function WoollyWormRace() {
     clearInterval(raceIntervalRef.current)
     clearInterval(commentaryIntervalRef.current)
     stopCrowd()
+    raceFinishedRef.current = false
     const zeros = RACERS.map(() => 0)
     positionsRef.current = zeros
     setPositions(zeros)
@@ -173,7 +183,7 @@ export default function WoollyWormRace() {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
-      {/* Section header + mute toggle */}
+      {/* Header + mute toggle */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-display text-2xl md:text-3xl font-bold text-[#C2410C]">
@@ -205,7 +215,10 @@ export default function WoollyWormRace() {
 
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {RACERS.map((racer) => (
-              <div key={racer.id} className="flex flex-col items-center gap-1 p-2 bg-[#2A1F14] border border-[#78350F] rounded-lg">
+              <div
+                key={racer.id}
+                className="flex flex-col items-center gap-1 p-2 bg-[#2A1F14] border border-[#78350F] rounded-lg"
+              >
                 {racer.avatarUrl ? (
                   <img
                     src={racer.avatarUrl}
@@ -250,7 +263,7 @@ export default function WoollyWormRace() {
               </span>
             </div>
           )}
-          <RaceTrack racers={RACERS} positions={positions} phase={phase} winner={winner} />
+          <RaceTrack racers={RACERS} positions={positions} winner={winner} />
           <CommentaryFeed lines={commentary} />
         </div>
       )}
@@ -258,7 +271,7 @@ export default function WoollyWormRace() {
       {/* FINISHED */}
       {phase === PHASE.FINISHED && winner && (
         <div className="space-y-4">
-          <RaceTrack racers={RACERS} positions={positions} phase={phase} winner={winner} />
+          <RaceTrack racers={RACERS} positions={positions} winner={winner} />
           <WinnerScreen winner={winner} onReset={reset} />
         </div>
       )}
