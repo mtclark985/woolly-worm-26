@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react'
 
 export default function CommentaryFeed({ lines }) {
-  const bottomRef = useRef(null)
+  const containerRef = useRef(null)
 
+  // Scroll INSIDE the feed container — not the page
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
   }, [lines])
 
   return (
@@ -15,18 +18,17 @@ export default function CommentaryFeed({ lines }) {
           Live Commentary · Adam Binder
         </span>
       </div>
-      <div className="h-32 overflow-y-auto p-3 space-y-1.5 text-sm">
+      {/* Fixed height — new lines scroll internally, race track stays visible */}
+      <div
+        ref={containerRef}
+        className="h-48 overflow-y-auto p-3 space-y-1.5 text-sm scroll-smooth"
+      >
         {lines.map((line, i) => (
-          <p
-            key={i}
-            className="text-[#FEF3C7] leading-snug animate-fade-in-up"
-            style={{ animationDelay: '0ms' }}
-          >
+          <p key={i} className="text-[#FEF3C7] leading-snug">
             <span className="text-[#D97706] mr-1">›</span>
             {line}
           </p>
         ))}
-        <div ref={bottomRef} />
       </div>
     </div>
   )
