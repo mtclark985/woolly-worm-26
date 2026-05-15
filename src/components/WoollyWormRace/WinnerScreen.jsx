@@ -76,9 +76,9 @@ export default function WinnerScreen({ winner, onReset }) {
 
       {/* Worm avatar */}
       <div className="flex flex-col items-center">
-        {winner.photo ? (
+        {winner.avatarUrl ? (
           <img
-            src={winner.photo}
+            src={winner.avatarUrl}
             alt={winner.kid}
             className="w-20 h-20 rounded-full border-4 object-cover"
             style={{ borderColor: winner.color }}

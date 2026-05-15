@@ -87,9 +87,9 @@ export default function RaceTrack({ racers, positions, phase, winner }) {
 
                 {/* Kid avatar + name */}
                 <div className="flex flex-col items-center gap-0.5 mt-1">
-                  {racer.photo ? (
+                  {racer.avatarUrl ? (
                     <img
-                      src={racer.photo}
+                      src={racer.avatarUrl}
                       alt={racer.kid}
                       className="w-8 h-8 rounded-full border-2 object-cover"
                       style={{ borderColor: racer.color }}

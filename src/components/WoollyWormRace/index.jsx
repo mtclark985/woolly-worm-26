@@ -196,9 +196,9 @@ export default function WoollyWormRace() {
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {RACERS.map((racer) => (
               <div key={racer.id} className="flex flex-col items-center gap-1 p-2 bg-[#2A1F14] border border-[#78350F] rounded-lg">
-                {racer.photo ? (
+                {racer.avatarUrl ? (
                   <img
-                    src={racer.photo}
+                    src={racer.avatarUrl}
                     alt={racer.kid}
                     className="w-10 h-10 rounded-full border-2 object-cover"
                     style={{ borderColor: racer.color }}
