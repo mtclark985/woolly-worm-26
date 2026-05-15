@@ -54,6 +54,20 @@ export default function Meals() {
     loadMeals()
   }
 
+  async function handleUnclaim() {
+    if (!editing) return
+    const existing = getMeal(editing.date, editing.meal_type)
+    if (!existing) return
+    await supabase.from('meals').update({
+      claimed_by: null,
+      description: null,
+      notes: null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', existing.id)
+    setEditing(null)
+    loadMeals()
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold text-[#2A2118] mb-2">🍳 Meal Sign-Up</h1>
@@ -164,6 +178,16 @@ export default function Meals() {
                 Save
               </button>
             </div>
+
+            {/* Remove sign-up — only when slot is currently claimed */}
+            {getMeal(editing.date, editing.meal_type)?.claimed_by && (
+              <button
+                onClick={handleUnclaim}
+                className="w-full mt-4 py-2 px-4 border-2 border-[#B91C1C] text-[#B91C1C] rounded-lg text-sm font-medium hover:bg-[#B91C1C] hover:text-white transition-colors"
+              >
+                Remove my sign-up
+              </button>
+            )}
           </div>
         </div>
       )}
