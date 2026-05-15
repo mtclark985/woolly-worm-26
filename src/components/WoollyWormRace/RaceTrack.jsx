@@ -74,9 +74,11 @@ export default function RaceTrack({ racers, positions, phase, winner }) {
                       }}
                     >
                       <Worm
-                        color={racer.color}
+                        bodyColor={racer.wormBody}
+                        bandColor={racer.wormBand}
                         progress={progress}
                         isWinner={isWin}
+                        segments={4}
                         size={32}
                       />
                     </div>

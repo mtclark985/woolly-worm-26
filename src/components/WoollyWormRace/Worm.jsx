@@ -1,132 +1,120 @@
-// A single woolly worm — 13 segments (honoring the festival's 13-weeks-of-winter tradition)
-// The worm is drawn vertically (head at top) as SVG.
+// Woolly worm SVG component.
+// `segments` prop controls body length:
+//   - 4 (default for racing) — head-focused, visible on the track
+//   - 13 — full festival length, used on the winner screen winter forecast display
 
-const SEGMENT_COUNT = 13
-
-export default function Worm({ color, progress, isWinner = false, size = 40 }) {
-  const segH = size * 0.85 // segment height
+export default function Worm({
+  bodyColor = '#5C3317',
+  bandColor = '#1A0A04',
+  progress = 0,
+  isWinner = false,
+  size = 40,
+  segments = 4,
+}) {
+  const segH = size * 0.9
   const segW = size
-  const totalH = SEGMENT_COUNT * segH * 0.72 + size * 0.6 // head
+  const totalH = segments * segH * 0.68 + size * 0.65 // segments + head
   const cx = segW / 2
 
-  // Wobble offsets — each segment shifts left/right slightly for the inchworm look
+  // Subtle lateral wave as worm climbs — amplitude scales with segment count
   const wobble = (i) => {
-    const wave = Math.sin((i / SEGMENT_COUNT) * Math.PI * 2 + (progress || 0) * 12)
-    return wave * segW * 0.18
+    const wave = Math.sin((i / Math.max(segments, 1)) * Math.PI * 1.5 + (progress || 0) * 10)
+    return wave * segW * 0.14
   }
 
-  const segments = Array.from({ length: SEGMENT_COUNT }, (_, i) => {
-    const y = size * 0.55 + i * segH * 0.72
-    const rx = segW * 0.42
-    const ry = segH * 0.38
-    // Darker at bottom segments, lighter at top
-    const shade = i < 2 ? 1.15 : i > 10 ? 0.85 : 1.0
-    return { i, y, rx, ry, shade }
+  const segList = Array.from({ length: segments }, (_, i) => {
+    const y = size * 0.58 + i * segH * 0.68
+    const rx = segW * 0.40
+    const ry = segH * 0.36
+    // Alternate body / band colors
+    const isBand = i % 2 === 1
+    return { i, y, rx, ry, isBand }
   })
+
+  const winnerGlow = isWinner
+    ? `drop-shadow(0 0 6px ${bodyColor}) drop-shadow(0 0 12px rgba(217,119,6,0.6))`
+    : undefined
 
   return (
     <svg
       width={segW + 10}
       height={totalH + 10}
       viewBox={`-5 -5 ${segW + 10} ${totalH + 10}`}
-      style={{
-        filter: isWinner ? `drop-shadow(0 0 8px ${color})` : undefined,
-        transition: 'filter 0.3s',
-      }}
+      style={{ filter: winnerGlow, transition: 'filter 0.3s' }}
       aria-hidden="true"
     >
-      {/* Segments from bottom to top so head renders on top */}
-      {[...segments].reverse().map(({ i, y, rx, ry, shade }) => (
+      {/* Segments — rendered bottom-up so head draws on top */}
+      {[...segList].reverse().map(({ i, y, rx, ry, isBand }) => (
         <ellipse
           key={i}
           cx={cx + wobble(i)}
           cy={y}
           rx={rx}
           ry={ry}
-          fill={shadeColor(color, shade)}
-          stroke="rgba(0,0,0,0.25)"
-          strokeWidth="0.8"
+          fill={isBand ? bandColor : bodyColor}
+          stroke="rgba(0,0,0,0.3)"
+          strokeWidth="0.7"
         />
       ))}
 
-      {/* Fuzzy body hairs — small dashes on each segment */}
-      {segments.map(({ i, y }) =>
-        i % 2 === 0 ? (
-          <g key={`hair-${i}`}>
-            <line
-              x1={cx + wobble(i) - segW * 0.42}
-              y1={y - segH * 0.1}
-              x2={cx + wobble(i) - segW * 0.58}
-              y2={y - segH * 0.28}
-              stroke={shadeColor(color, 0.7)}
-              strokeWidth="1"
-              strokeLinecap="round"
-            />
-            <line
-              x1={cx + wobble(i) + segW * 0.42}
-              y1={y - segH * 0.1}
-              x2={cx + wobble(i) + segW * 0.58}
-              y2={y - segH * 0.28}
-              stroke={shadeColor(color, 0.7)}
-              strokeWidth="1"
-              strokeLinecap="round"
-            />
-          </g>
-        ) : null
-      )}
+      {/* Fuzzy hairs on each segment */}
+      {segList.map(({ i, y }) => (
+        <g key={`h${i}`}>
+          <line
+            x1={cx + wobble(i) - segW * 0.40}
+            y1={y - segH * 0.08}
+            x2={cx + wobble(i) - segW * 0.56}
+            y2={y - segH * 0.26}
+            stroke={bandColor}
+            strokeWidth="0.9"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+          <line
+            x1={cx + wobble(i) + segW * 0.40}
+            y1={y - segH * 0.08}
+            x2={cx + wobble(i) + segW * 0.56}
+            y2={y - segH * 0.26}
+            stroke={bandColor}
+            strokeWidth="0.9"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+        </g>
+      ))}
 
       {/* Head */}
       <circle
         cx={cx}
-        cy={size * 0.35}
-        r={size * 0.32}
-        fill={shadeColor(color, 1.1)}
-        stroke="rgba(0,0,0,0.3)"
-        strokeWidth="1"
+        cy={size * 0.33}
+        r={size * 0.30}
+        fill={bodyColor}
+        stroke="rgba(0,0,0,0.35)"
+        strokeWidth="0.9"
       />
       {/* Eyes */}
-      <circle cx={cx - size * 0.1} cy={size * 0.28} r={size * 0.07} fill="white" />
-      <circle cx={cx + size * 0.1} cy={size * 0.28} r={size * 0.07} fill="white" />
-      <circle cx={cx - size * 0.08} cy={size * 0.29} r={size * 0.04} fill="#1C1410" />
-      <circle cx={cx + size * 0.08} cy={size * 0.29} r={size * 0.04} fill="#1C1410" />
+      <circle cx={cx - size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
+      <circle cx={cx + size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
+      <circle cx={cx - size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
+      <circle cx={cx + size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
+      {/* Eye shine */}
+      <circle cx={cx - size * 0.06} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
+      <circle cx={cx + size * 0.10} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
       {/* Smile */}
       <path
-        d={`M ${cx - size * 0.1} ${size * 0.38} Q ${cx} ${size * 0.44} ${cx + size * 0.1} ${size * 0.38}`}
+        d={`M ${cx - size * 0.09} ${size * 0.37} Q ${cx} ${size * 0.43} ${cx + size * 0.09} ${size * 0.37}`}
         stroke="#1C1410"
-        strokeWidth="1.2"
+        strokeWidth="1.1"
         fill="none"
         strokeLinecap="round"
       />
       {/* Antennae */}
-      <line
-        x1={cx - size * 0.08}
-        y1={size * 0.06}
-        x2={cx - size * 0.22}
-        y2={-size * 0.08}
-        stroke={shadeColor(color, 0.8)}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-      <line
-        x1={cx + size * 0.08}
-        y1={size * 0.06}
-        x2={cx + size * 0.22}
-        y2={-size * 0.08}
-        stroke={shadeColor(color, 0.8)}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-      <circle cx={cx - size * 0.22} cy={-size * 0.08} r={size * 0.05} fill={shadeColor(color, 1.2)} />
-      <circle cx={cx + size * 0.22} cy={-size * 0.08} r={size * 0.05} fill={shadeColor(color, 1.2)} />
+      <line x1={cx - size * 0.07} y1={size * 0.05} x2={cx - size * 0.20} y2={-size * 0.10}
+        stroke={bandColor} strokeWidth="1.1" strokeLinecap="round" />
+      <line x1={cx + size * 0.07} y1={size * 0.05} x2={cx + size * 0.20} y2={-size * 0.10}
+        stroke={bandColor} strokeWidth="1.1" strokeLinecap="round" />
+      <circle cx={cx - size * 0.20} cy={-size * 0.10} r={size * 0.045} fill={bodyColor} stroke={bandColor} strokeWidth="0.5" />
+      <circle cx={cx + size * 0.20} cy={-size * 0.10} r={size * 0.045} fill={bodyColor} stroke={bandColor} strokeWidth="0.5" />
     </svg>
   )
-}
-
-// Lighten or darken a hex color by multiplying RGB channels
-function shadeColor(hex, factor) {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  const clamp = (v) => Math.min(255, Math.max(0, Math.round(v * factor)))
-  return `rgb(${clamp(r)}, ${clamp(g)}, ${clamp(b)})`
 }
