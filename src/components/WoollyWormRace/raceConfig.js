@@ -3,7 +3,7 @@
 
 export const STRING_HEIGHT = 320          // px — visual height of each string
 
-export const WORM_SIZE = 32               // size prop passed to racing Worm SVGs
+export const WORM_SIZE = 40               // size prop passed to racing Worm SVGs
 export const WORM_RACE_SEGMENTS = 4       // segments prop for racing worms
 
 // Replicate Worm.jsx's height formula so WIN_PROGRESS stays in sync

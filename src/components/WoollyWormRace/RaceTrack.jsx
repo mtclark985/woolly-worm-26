@@ -87,6 +87,8 @@ export default function RaceTrack({ racers, positions, winner }) {
                         isWinner={isWin}
                         segments={WORM_RACE_SEGMENTS}
                         size={WORM_SIZE}
+                        avatarUrl={racer.avatarUrl}
+                        racerId={racer.id}
                       />
                     </div>
                   </div>

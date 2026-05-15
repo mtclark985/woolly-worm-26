@@ -92,7 +92,7 @@ export default function WinnerScreen({ winner, onReset }) {
           </div>
         )}
         <div className="mt-2">
-          <Worm bodyColor={winner.wormBody} bandColor={winner.wormBand} progress={1} isWinner segments={13} size={36} />
+          <Worm bodyColor={winner.wormBody} bandColor={winner.wormBand} progress={1} isWinner segments={13} size={36} avatarUrl={winner.avatarUrl} racerId={winner.id} />
         </div>
       </div>
 

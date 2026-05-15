@@ -10,6 +10,8 @@ export default function Worm({
   isWinner = false,
   size = 40,
   segments = 4,
+  avatarUrl = null,
+  racerId = null,
 }) {
   const segH = size * 0.9
   const segW = size
@@ -84,30 +86,67 @@ export default function Worm({
       ))}
 
       {/* Head */}
-      <circle
-        cx={cx}
-        cy={size * 0.33}
-        r={size * 0.30}
-        fill={bodyColor}
-        stroke="rgba(0,0,0,0.35)"
-        strokeWidth="0.9"
-      />
-      {/* Eyes */}
-      <circle cx={cx - size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
-      <circle cx={cx + size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
-      <circle cx={cx - size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
-      <circle cx={cx + size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
-      {/* Eye shine */}
-      <circle cx={cx - size * 0.06} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
-      <circle cx={cx + size * 0.10} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
-      {/* Smile */}
-      <path
-        d={`M ${cx - size * 0.09} ${size * 0.37} Q ${cx} ${size * 0.43} ${cx + size * 0.09} ${size * 0.37}`}
-        stroke="#1C1410"
-        strokeWidth="1.1"
-        fill="none"
-        strokeLinecap="round"
-      />
+      {avatarUrl && racerId ? (
+        <>
+          <defs>
+            <clipPath id={`head-${racerId}`}>
+              <circle cx={cx} cy={size * 0.33} r={size * 0.30} />
+            </clipPath>
+          </defs>
+          <circle
+            cx={cx}
+            cy={size * 0.33}
+            r={size * 0.30}
+            fill={bodyColor}
+            stroke="rgba(0,0,0,0.35)"
+            strokeWidth="0.9"
+          />
+          <image
+            href={avatarUrl}
+            x={cx - size * 0.30}
+            y={size * 0.33 - size * 0.30}
+            width={size * 0.60}
+            height={size * 0.60}
+            clipPath={`url(#head-${racerId})`}
+            preserveAspectRatio="xMidYMid slice"
+          />
+          <circle
+            cx={cx}
+            cy={size * 0.33}
+            r={size * 0.30}
+            fill="none"
+            stroke="rgba(0,0,0,0.35)"
+            strokeWidth="0.9"
+          />
+        </>
+      ) : (
+        <>
+          <circle
+            cx={cx}
+            cy={size * 0.33}
+            r={size * 0.30}
+            fill={bodyColor}
+            stroke="rgba(0,0,0,0.35)"
+            strokeWidth="0.9"
+          />
+          {/* Eyes */}
+          <circle cx={cx - size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
+          <circle cx={cx + size * 0.10} cy={size * 0.26} r={size * 0.07} fill="white" />
+          <circle cx={cx - size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
+          <circle cx={cx + size * 0.08} cy={size * 0.27} r={size * 0.04} fill="#1C1410" />
+          {/* Eye shine */}
+          <circle cx={cx - size * 0.06} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
+          <circle cx={cx + size * 0.10} cy={size * 0.25} r={size * 0.015} fill="white" opacity="0.8" />
+          {/* Smile */}
+          <path
+            d={`M ${cx - size * 0.09} ${size * 0.37} Q ${cx} ${size * 0.43} ${cx + size * 0.09} ${size * 0.37}`}
+            stroke="#1C1410"
+            strokeWidth="1.1"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </>
+      )}
       {/* Antennae */}
       <line x1={cx - size * 0.07} y1={size * 0.05} x2={cx - size * 0.20} y2={-size * 0.10}
         stroke={bandColor} strokeWidth="1.1" strokeLinecap="round" />
