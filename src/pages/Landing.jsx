@@ -10,7 +10,7 @@ export default function Landing() {
       }}
     >
       {/* Hero */}
-      <header className="relative text-center px-4 pt-12 pb-8 overflow-hidden">
+      <header className="relative text-center px-4 pt-8 sm:pt-12 pb-6 sm:pb-8 overflow-hidden">
         {/* Leaf decorations */}
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
           <span className="absolute text-5xl opacity-20 top-4 left-4 rotate-12">🍂</span>
@@ -20,7 +20,7 @@ export default function Landing() {
         </div>
 
         <div className="relative z-10 max-w-2xl mx-auto">
-          <div className="text-5xl mb-3">🐛</div>
+          <div className="text-4xl sm:text-5xl mb-3">🐛</div>
 
           <h1 className="font-display font-bold text-[#2A2118] leading-tight mb-2" style={{ fontSize: 'clamp(1.75rem, 6vw, 3rem)' }}>
             {/* TODO: Replace with your actual group name */}

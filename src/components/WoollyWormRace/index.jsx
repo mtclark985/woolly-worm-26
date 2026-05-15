@@ -245,7 +245,7 @@ export default function WoollyWormRace() {
           <div className="text-center">
             <button
               onClick={startRace}
-              className="bg-[#C2410C] hover:bg-[#B91C1C] text-white font-bold py-4 px-10 rounded-xl text-xl font-display transition-all hover:scale-105 active:scale-95 animate-pulse-glow shadow-lg"
+              className="w-full sm:w-auto bg-[#C2410C] hover:bg-[#B91C1C] text-white font-bold py-4 px-10 rounded-xl text-xl font-display transition-all hover:scale-105 active:scale-95 animate-pulse-glow shadow-lg"
             >
               🐛 START RACE
             </button>
