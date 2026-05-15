@@ -45,7 +45,7 @@ export default function WoollyWormRace() {
   const commentaryIntervalRef = useRef(null)
   const prevLeaderRef = useRef(null)
 
-  const { playCountdown, startCrowd, stopCrowd, playWinner, toggleMute, muted } = useSounds()
+  const { playCountdown, primeCrowd, startCrowd, stopCrowd, playWinner, toggleMute, muted } = useSounds()
 
   const addComment = useCallback((line) => {
     setCommentary((prev) => [...prev.slice(-40), line])
@@ -63,6 +63,7 @@ export default function WoollyWormRace() {
 
     profilesRef.current = RACERS.map(() => generateRaceProfile())
     setPhase(PHASE.COUNTDOWN)
+    primeCrowd()     // unlock crowd audio on iOS — must be inside the click handler
     playCountdown()  // inside user-gesture handler — satisfies iOS AudioContext requirement
 
     const steps = ['On your mark...', 'Get set...', '🐛 GO! 🐛']

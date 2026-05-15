@@ -1,0 +1,327 @@
+warning: in the working copy of 'src/components/WoollyWormRace/useSounds.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/components/WoollyWormRace/useSounds.js b/src/components/WoollyWormRace/useSounds.js[m
+[1mindex b665e37..5d8ad4e 100644[m
+[1m--- a/src/components/WoollyWormRace/useSounds.js[m
+[1m+++ b/src/components/WoollyWormRace/useSounds.js[m
+[36m@@ -1,41 +1,47 @@[m
+ import { useRef, useState } from 'react'[m
+ [m
+[31m-// All sounds are synthesized via Web Audio API — no audio files needed.[m
+[31m-// iOS Safari requires AudioContext to be created/resumed inside a user gesture[m
+[31m-// (e.g. button click). The Start Race button satisfies this requirement.[m
+[32m+[m[32m// Sound strategy:[m
+[32m+[m[32m//   Crowd loop   → HTML Audio (/sounds/crowd.mp3, real recording)[m
+[32m+[m[32m//   Countdown    → Web Audio API oscillators (synthesized beeps + GO horn)[m
+[32m+[m[32m//   Winner horn  → Web Audio API oscillators (synthesized air horn)[m
+ //[m
+[31m-// If Web Audio is unavailable or blocked, sounds silently degrade — the race[m
+[31m-// still works visually.[m
+[32m+[m[32m// iOS Safari requires audio to be initiated inside a user-gesture handler.[m
+[32m+[m[32m// Solution for the crowd audio (which starts ~3 sec after the button click,[m
+[32m+[m[32m// inside a setInterval callback — NOT a user gesture):[m
+[32m+[m[32m//   primeCrowd() is called synchronously inside the Start Race click handler.[m
+[32m+[m[32m//   It calls audio.play() at volume 0, which "unlocks" the element on iOS.[m
+[32m+[m[32m//   startCrowd() (called from the timer) then just fades the volume up.[m
+[32m+[m[32m//[m
+[32m+[m[32m// If /sounds/crowd.mp3 fails to load, play() rejects silently — graceful degrade.[m
+ [m
+ export function useSounds() {[m
+[31m-  const acRef = useRef(null)[m
+[31m-  const crowdRef = useRef(null)[m
+[31m-  const crowdGainRef = useRef(null)[m
+[32m+[m[32m  const acRef = useRef(null)          // Web Audio context for synth sounds[m
+[32m+[m[32m  const crowdAudioRef = useRef(null)  // HTML Audio element for crowd.mp3[m
+[32m+[m[32m  const crowdFadeRef = useRef(null)   // interval id for volume fade[m
+   const [muted, setMuted] = useState(false)[m
+   const mutedRef = useRef(false)[m
+ [m
+[32m+[m[32m  // ── Web Audio helpers ──────────────────────────────────────────────────────[m
+[32m+[m
+   function getAC() {[m
+     try {[m
+       if (!acRef.current) {[m
+         acRef.current = new (window.AudioContext || window.webkitAudioContext)()[m
+       }[m
+[31m-      if (acRef.current.state === 'suspended') {[m
+[31m-        acRef.current.resume()[m
+[31m-      }[m
+[32m+[m[32m      if (acRef.current.state === 'suspended') acRef.current.resume()[m
+       return acRef.current[m
+     } catch {[m
+       return null[m
+     }[m
+   }[m
+ [m
+[31m-  // Play a single beep: frequency, duration, start offset from now[m
+[31m-  function beep(ac, freq, startOffset, duration, type = 'sine') {[m
+[32m+[m[32m  function beep(ac, freq, startOffset, duration) {[m
+     if (!ac || mutedRef.current) return[m
+     const osc = ac.createOscillator()[m
+     const gain = ac.createGain()[m
+     osc.connect(gain)[m
+     gain.connect(ac.destination)[m
+[31m-    osc.type = type[m
+[32m+[m[32m    osc.type = 'sine'[m
+     osc.frequency.setValueAtTime(freq, ac.currentTime + startOffset)[m
+     gain.gain.setValueAtTime(0, ac.currentTime + startOffset)[m
+     gain.gain.linearRampToValueAtTime(0.3, ac.currentTime + startOffset + 0.01)[m
+[36m@@ -44,7 +50,6 @@[m [mexport function useSounds() {[m
+     osc.stop(ac.currentTime + startOffset + duration + 0.05)[m
+   }[m
+ [m
+[31m-  // GO! horn: frequency sweep down with sawtooth for a brassy sound[m
+   function goHorn(ac, startOffset) {[m
+     if (!ac || mutedRef.current) return[m
+     const osc = ac.createOscillator()[m
+[36m@@ -61,105 +66,59 @@[m [mexport function useSounds() {[m
+     osc.stop(ac.currentTime + startOffset + 0.6)[m
+   }[m
+ [m
+[31m-  // Crowd noise: white noise through bandpass filters, amplitude-modulated[m
+[31m-  // Creates that "murmuring crowd" character[m
+[31m-  function makeCrowdNoise(ac) {[m
+[31m-    const bufferSize = ac.sampleRate * 3 // 3-second loopable buffer[m
+[31m-    const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate)[m
+[31m-    const data = buffer.getChannelData(0)[m
+[31m-[m
+[31m-    // Pink-ish noise (each sample influenced by previous)[m
+[31m-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0[m
+[31m-    for (let i = 0; i < bufferSize; i++) {[m
+[31m-      const white = Math.random() * 2 - 1[m
+[31m-      b0 = 0.99886 * b0 + white * 0.0555179[m
+[31m-      b1 = 0.99332 * b1 + white * 0.0750759[m
+[31m-      b2 = 0.96900 * b2 + white * 0.1538520[m
+[31m-      b3 = 0.86650 * b3 + white * 0.3104856[m
+[31m-      b4 = 0.55000 * b4 + white * 0.5329522[m
+[31m-      b5 = -0.7616 * b5 - white * 0.0168980[m
+[31m-      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11[m
+[31m-      b6 = white * 0.115926[m
+[31m-    }[m
+[31m-[m
+[31m-    const source = ac.createBufferSource()[m
+[31m-    source.buffer = buffer[m
+[31m-    source.loop = true[m
+[31m-[m
+[31m-    // Bandpass filter centered around human-voice frequencies[m
+[31m-    const filter = ac.createBiquadFilter()[m
+[31m-    filter.type = 'bandpass'[m
+[31m-    filter.frequency.value = 800[m
+[31m-    filter.Q.value = 0.8[m
+[31m-[m
+[31m-    // Second filter for warmth[m
+[31m-    const filter2 = ac.createBiquadFilter()[m
+[31m-    filter2.type = 'peaking'[m
+[31m-    filter2.frequency.value = 400[m
+[31m-    filter2.gain.value = 6[m
+[31m-[m
+[31m-    // Slow amplitude modulation for "crowd wave" effect[m
+[31m-    const lfo = ac.createOscillator()[m
+[31m-    const lfoGain = ac.createGain()[m
+[31m-    lfo.frequency.value = 0.3[m
+[31m-    lfoGain.gain.value = 0.15[m
+[31m-    lfo.connect(lfoGain)[m
+[31m-[m
+[31m-    const masterGain = ac.createGain()[m
+[31m-    masterGain.gain.value = 0.08[m
+[31m-[m
+[31m-    lfoGain.connect(masterGain.gain)[m
+[31m-    source.connect(filter)[m
+[31m-    filter.connect(filter2)[m
+[31m-    filter2.connect(masterGain)[m
+[31m-    masterGain.connect(ac.destination)[m
+[31m-[m
+[31m-    lfo.start()[m
+[31m-    return { source, masterGain, lfo }[m
+[31m-  }[m
+[31m-[m
+[31m-  // Air horn: classic descending frequency sweep[m
+   function airHorn(ac, startOffset) {[m
+     if (!ac || mutedRef.current) return[m
+[31m-    // Primary horn frequency[m
+     const osc1 = ac.createOscillator()[m
+     const osc2 = ac.createOscillator()[m
+     const gain = ac.createGain()[m
+     const dist = ac.createWaveShaper()[m
+[31m-[m
+[31m-    // Mild distortion for brass character[m
+     const curve = new Float32Array(256)[m
+     for (let i = 0; i < 256; i++) {[m
+       const x = (i * 2) / 256 - 1[m
+       curve[i] = (Math.PI + 200) * x / (Math.PI + 200 * Math.abs(x))[m
+     }[m
+     dist.curve = curve[m
+[31m-[m
+[31m-    osc1.connect(gain)[m
+[31m-    osc2.connect(gain)[m
+[31m-    gain.connect(dist)[m
+[31m-    dist.connect(ac.destination)[m
+[31m-[m
+[31m-    osc1.type = 'sawtooth'[m
+[31m-    osc2.type = 'square'[m
+[32m+[m[32m    osc1.connect(gain); osc2.connect(gain)[m
+[32m+[m[32m    gain.connect(dist); dist.connect(ac.destination)[m
+[32m+[m[32m    osc1.type = 'sawtooth'; osc2.type = 'square'[m
+     osc1.frequency.setValueAtTime(260, ac.currentTime + startOffset)[m
+     osc1.frequency.exponentialRampToValueAtTime(140, ac.currentTime + startOffset + 1.0)[m
+     osc2.frequency.setValueAtTime(520, ac.currentTime + startOffset)[m
+     osc2.frequency.exponentialRampToValueAtTime(280, ac.currentTime + startOffset + 1.0)[m
+[31m-[m
+     gain.gain.setValueAtTime(0, ac.currentTime + startOffset)[m
+     gain.gain.linearRampToValueAtTime(0.35, ac.currentTime + startOffset + 0.05)[m
+     gain.gain.setValueAtTime(0.35, ac.currentTime + startOffset + 0.8)[m
+     gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + startOffset + 1.2)[m
+[32m+[m[32m    osc1.start(ac.currentTime + startOffset); osc2.start(ac.currentTime + startOffset)[m
+[32m+[m[32m    osc1.stop(ac.currentTime + startOffset + 1.3); osc2.stop(ac.currentTime + startOffset + 1.3)[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // ── HTML Audio crowd helpers ───────────────────────────────────────────────[m
+[32m+[m
+[32m+[m[32m  function getCrowdAudio() {[m
+[32m+[m[32m    if (!crowdAudioRef.current) {[m
+[32m+[m[32m      try {[m
+[32m+[m[32m        const audio = new Audio('/sounds/crowd.mp3')[m
+[32m+[m[32m        audio.loop = true[m
+[32m+[m[32m        audio.volume = 0[m
+[32m+[m[32m        crowdAudioRef.current = audio[m
+[32m+[m[32m      } catch {[m
+[32m+[m[32m        return null[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[32m    return crowdAudioRef.current[m
+[32m+[m[32m  }[m
+ [m
+[31m-    osc1.start(ac.currentTime + startOffset)[m
+[31m-    osc2.start(ac.currentTime + startOffset)[m
+[31m-    osc1.stop(ac.currentTime + startOffset + 1.3)[m
+[31m-    osc2.stop(ac.currentTime + startOffset + 1.3)[m
+[32m+[m[32m  function clearCrowdFade() {[m
+[32m+[m[32m    if (crowdFadeRef.current !== null) {[m
+[32m+[m[32m      clearInterval(crowdFadeRef.current)[m
+[32m+[m[32m      crowdFadeRef.current = null[m
+[32m+[m[32m    }[m
+   }[m
+ [m
+[31m-  // Called on "Start Race" button click (user gesture = iOS AudioContext unlock)[m
+[31m-  // Plays: beep at 0s, beep at 0.9s, beep at 1.8s, GO horn at 2.7s[m
+[32m+[m[32m  // ── Public API ─────────────────────────────────────────────────────────────[m
+[32m+[m
+[32m+[m[32m  // 3 ascending beeps + GO horn, timed to match countdown text[m
+   function playCountdown() {[m
+     const ac = getAC()[m
+     if (!ac) return[m
+[36m@@ -169,70 +128,67 @@[m [mexport function useSounds() {[m
+     goHorn(ac, 2.7)[m
+   }[m
+ [m
+[32m+[m[32m  // MUST be called synchronously inside the Start Race click handler.[m
+[32m+[m[32m  // Starts the audio element at volume 0, which unlocks it on iOS Safari so[m
+[32m+[m[32m  // that startCrowd() (called later from a timer) can raise the volume freely.[m
+[32m+[m[32m  function primeCrowd() {[m
+[32m+[m[32m    if (mutedRef.current) return[m
+[32m+[m[32m    const audio = getCrowdAudio()[m
+[32m+[m[32m    if (!audio) return[m
+[32m+[m[32m    audio.currentTime = 0[m
+[32m+[m[32m    audio.volume = 0[m
+[32m+[m[32m    audio.play().catch(() => {}) // silent fail if file missing — graceful degrade[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Called from the race timer after the countdown finishes.[m
+[32m+[m[32m  // Audio is already playing (from primeCrowd) — just fade volume up to 0.4.[m
+   function startCrowd() {[m
+[31m-    const ac = getAC()[m
+[31m-    if (!ac || mutedRef.current) return[m
+[31m-    stopCrowd() // clear any existing[m
+[31m-    try {[m
+[31m-      const { source, masterGain, lfo } = makeCrowdNoise(ac)[m
+[31m-      crowdRef.current = { source, lfo }[m
+[31m-      crowdGainRef.current = masterGain[m
+[31m-      // Fade in over 1 second[m
+[31m-      masterGain.gain.setValueAtTime(0, ac.currentTime)[m
+[31m-      masterGain.gain.linearRampToValueAtTime(0.08, ac.currentTime + 1.0)[m
+[31m-      source.start()[m
+[31m-      lfo.start()[m
+[31m-    } catch {[m
+[31m-      // Silently degrade[m
+[31m-    }[m
+[32m+[m[32m    if (mutedRef.current) return[m
+[32m+[m[32m    const audio = getCrowdAudio()[m
+[32m+[m[32m    if (!audio) return[m
+[32m+[m[32m    clearCrowdFade()[m
+[32m+[m[32m    // Re-call play() in case primeCrowd failed silently (desktop, no gesture needed)[m
+[32m+[m[32m    audio.play().catch(() => {})[m
+[32m+[m[32m    let vol = audio.volume[m
+[32m+[m[32m    crowdFadeRef.current = setInterval(() => {[m
+[32m+[m[32m      vol = Math.min(0.4, vol + 0.04)[m
+[32m+[m[32m      if (crowdAudioRef.current) crowdAudioRef.current.volume = vol[m
+[32m+[m[32m      if (vol >= 0.4) clearCrowdFade()[m
+[32m+[m[32m    }, 100) // 10 steps × 100ms = 1 second fade-in[m
+   }[m
+ [m
+[32m+[m[32m  // Fade out and pause. Safe to call even if audio never started.[m
+   function stopCrowd() {[m
+[31m-    if (crowdRef.current) {[m
+[31m-      try {[m
+[31m-        const ac = acRef.current[m
+[31m-        if (ac && crowdGainRef.current) {[m
+[31m-          // Fade out before stopping[m
+[31m-          crowdGainRef.current.gain.linearRampToValueAtTime(0, ac.currentTime + 0.5)[m
+[32m+[m[32m    clearCrowdFade()[m
+[32m+[m[32m    const audio = crowdAudioRef.current[m
+[32m+[m[32m    if (!audio || audio.paused) return[m
+[32m+[m[32m    let vol = audio.volume[m
+[32m+[m[32m    crowdFadeRef.current = setInterval(() => {[m
+[32m+[m[32m      vol = Math.max(0, vol - 0.05)[m
+[32m+[m[32m      if (crowdAudioRef.current) crowdAudioRef.current.volume = vol[m
+[32m+[m[32m      if (vol <= 0) {[m
+[32m+[m[32m        clearCrowdFade()[m
+[32m+[m[32m        if (crowdAudioRef.current) {[m
+[32m+[m[32m          crowdAudioRef.current.pause()[m
+[32m+[m[32m          crowdAudioRef.current.currentTime = 0[m
+         }[m
+[31m-        setTimeout(() => {[m
+[31m-          try { crowdRef.current?.source.stop() } catch {}[m
+[31m-          try { crowdRef.current?.lfo.stop() } catch {}[m
+[31m-        }, 600)[m
+[31m-      } catch {}[m
+[31m-      crowdRef.current = null[m
+[31m-      crowdGainRef.current = null[m
+[31m-    }[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }, 50) // ~0.5 second fade-out[m
+   }[m
+ [m
+[32m+[m[32m  // Air horn + stop crowd[m
+   function playWinner() {[m
+[32m+[m[32m    stopCrowd()[m
+     const ac = getAC()[m
+     if (!ac) return[m
+[31m-    stopCrowd()[m
+     airHorn(ac, 0)[m
+[31m-    // Quick crowd surge after horn[m
+[31m-    try {[m
+[31m-      const { source, masterGain, lfo } = makeCrowdNoise(ac)[m
+[31m-      masterGain.gain.setValueAtTime(0, ac.currentTime)[m
+[31m-      masterGain.gain.linearRampToValueAtTime(0.18, ac.currentTime + 0.3)[m
+[31m-      masterGain.gain.linearRampToValueAtTime(0.04, ac.currentTime + 3.0)[m
+[31m-      masterGain.gain.linearRampToValueAtTime(0, ac.currentTime + 4.0)[m
+[31m-      source.start()[m
+[31m-      lfo.start()[m
+[31m-      setTimeout(() => {[m
+[31m-        try { source.stop() } catch {}[m
+[31m-        try { lfo.stop() } catch {}[m
+[31m-      }, 4500)[m
+[31m-    } catch {}[m
+   }[m
+ [m
+   function toggleMute() {[m
+     mutedRef.current = !mutedRef.current[m
+     setMuted(mutedRef.current)[m
+[31m-    if (mutedRef.current) {[m
+[31m-      stopCrowd()[m
+[31m-    }[m
+[32m+[m[32m    if (mutedRef.current) stopCrowd()[m
+   }[m
+ [m
+[31m-  return { playCountdown, startCrowd, stopCrowd, playWinner, toggleMute, muted }[m
+[32m+[m[32m  return { playCountdown, primeCrowd, startCrowd, stopCrowd, playWinner, toggleMute, muted }[m
+ }[m
