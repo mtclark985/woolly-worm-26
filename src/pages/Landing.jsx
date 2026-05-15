@@ -1,14 +1,10 @@
 import Countdown from '../components/Countdown'
 import WoollyWormRace from '../components/WoollyWormRace'
+import WeatherWidget from '../components/WeatherWidget'
 
 export default function Landing() {
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: 'linear-gradient(to bottom, #C8D8E8 0%, #EFE3CF 45%, #FEF3C7 100%)',
-      }}
-    >
+    <>
       {/* Hero */}
       <header className="relative text-center px-4 pt-8 sm:pt-12 pb-6 sm:pb-8 overflow-hidden">
         {/* Leaf decorations */}
@@ -23,7 +19,6 @@ export default function Landing() {
           <div className="text-4xl sm:text-5xl mb-3">🐛</div>
 
           <h1 className="font-display font-bold text-[#2A2118] leading-tight mb-2" style={{ fontSize: 'clamp(1.75rem, 6vw, 3rem)' }}>
-            {/* TODO: Replace with your actual group name */}
             Ms Eddie&apos;s Fan Club Goes to<br />
             <span className="text-[#C2410C]">Woolly Worm Fest 2026</span>
           </h1>
@@ -38,6 +33,11 @@ export default function Landing() {
           <Countdown />
         </div>
       </header>
+
+      {/* Weather */}
+      <div className="px-4 max-w-2xl mx-auto mb-6">
+        <WeatherWidget />
+      </div>
 
       {/* Divider */}
       <div className="flex items-center gap-3 px-6 max-w-2xl mx-auto mb-8">
@@ -57,6 +57,6 @@ export default function Landing() {
           🐛 Woolly Worm Fest 2026 · Family Trip App · Luca · Isla · Kameron · Kinze · Carter · Jack
         </p>
       </footer>
-    </div>
+    </>
   )
 }
