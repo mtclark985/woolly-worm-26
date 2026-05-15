@@ -19,7 +19,7 @@ export const RACERS = [
     // Authentic worm body: dark brown + near-black bands
     wormBody: '#5C2E0A',
     wormBand: '#1A0804',
-    avatarUrl: null,
+    avatarUrl: '/avatars/luca.jpg',
   },
   {
     id: 'isla',
@@ -30,7 +30,7 @@ export const RACERS = [
     // Lightest worm: tan/caramel body with warm dark-brown bands
     wormBody: '#C4895A',
     wormBand: '#5C2E0A',
-    avatarUrl: null,
+    avatarUrl: '/avatars/isla.jpg',
   },
   {
     id: 'kameron',
@@ -41,7 +41,7 @@ export const RACERS = [
     // Rust/reddish-brown body, very dark bands
     wormBody: '#8B3A0F',
     wormBand: '#2D1000',
-    avatarUrl: null,
+    avatarUrl: '/avatars/kameron.jpg',
   },
   {
     id: 'kinze',
@@ -52,7 +52,7 @@ export const RACERS = [
     // Deep rich brown body, charcoal-black bands
     wormBody: '#4A2210',
     wormBand: '#1C0C04',
-    avatarUrl: null,
+    avatarUrl: '/avatars/kinze.jpg',
   },
   {
     id: 'carter',
@@ -63,7 +63,7 @@ export const RACERS = [
     // Medium brown with a slight cool undertone, dark bands
     wormBody: '#6B5040',
     wormBand: '#26180E',
-    avatarUrl: null,
+    avatarUrl: '/avatars/carter.jpg',
   },
   {
     id: 'jack',
@@ -74,6 +74,6 @@ export const RACERS = [
     // Lightest-brown with a cool-gray tint, dark-brown bands
     wormBody: '#9A8472',
     wormBand: '#3A2A1C',
-    avatarUrl: null,
+    avatarUrl: '/avatars/jack.jpg',
   },
 ]
