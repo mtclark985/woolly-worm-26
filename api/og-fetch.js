@@ -12,13 +12,30 @@ export default async function handler(req, res) {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; OGFetcher/1.0)',
-        'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
     })
     clearTimeout(timeout)
 
     const html = await response.text()
+
+    // Detect bot-protection interstitial pages
+    const headSnippet = html.slice(0, 5000).toLowerCase()
+    const botSignatures = [
+      'security challenge',
+      'checking your browser',
+      'cf-browser-verification',
+      '<title>just a moment',
+      'ddos protection by cloudflare',
+      'please enable cookies',
+      'captcha',
+    ]
+    if (botSignatures.some((sig) => headSnippet.includes(sig))) {
+      console.log(`OG fetch: bot-protection page detected for ${url}`)
+      return res.status(200).json({ imageUrl: null, title: null, bedrooms: null, bathrooms: null, beds: null, sleepingAreas: null })
+    }
 
     // Parse OG image
     const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
