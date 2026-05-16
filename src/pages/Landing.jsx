@@ -1,6 +1,118 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Countdown from '../components/Countdown'
 import WoollyWormRace from '../components/WoollyWormRace'
 import WeatherWidget from '../components/WeatherWidget'
+import { supabase } from '../lib/supabase'
+
+function useQuickLinks() {
+  const [data, setData] = useState({ meals: null, house: null, messages: null })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return }
+    let cancelled = false
+    const timeout = setTimeout(() => { if (!cancelled) setLoading(false) }, 1000)
+
+    Promise.allSettled([
+      supabase.from('meals').select('id, claimed_by'),
+      supabase.from('house').select('name, check_in, check_out').limit(1).maybeSingle(),
+      supabase.from('house_candidates').select('id', { count: 'exact', head: true }),
+      supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]).then(([mealsRes, houseRes, candidatesRes, msgRes]) => {
+      if (cancelled) return
+      clearTimeout(timeout)
+      const meals = mealsRes.status === 'fulfilled' ? mealsRes.value.data : null
+      const house = houseRes.status === 'fulfilled' ? houseRes.value.data : null
+      const candidateCount = candidatesRes.status === 'fulfilled' ? candidatesRes.value.count : 0
+      const latestMsg = msgRes.status === 'fulfilled' ? msgRes.value.data : null
+      setData({ meals, house, candidateCount, latestMsg })
+      setLoading(false)
+    })
+
+    return () => { cancelled = true; clearTimeout(timeout) }
+  }, [])
+
+  return { data, loading }
+}
+
+function relativeTime(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+
+function QuickLinks() {
+  const { data, loading } = useQuickLinks()
+
+  const tiles = [
+    {
+      emoji: '🍽️',
+      title: 'Meal Planning',
+      to: '/meals',
+      preview: () => {
+        if (!data.meals) return null
+        if (data.meals.length === 0) return 'Sign up to cook'
+        const claimed = data.meals.filter((m) => m.claimed_by).length
+        return `${claimed} of ${data.meals.length} slots claimed`
+      },
+    },
+    {
+      emoji: '🏔️',
+      title: 'Our House',
+      to: '/house',
+      preview: () => {
+        if (data.house && data.house.name) {
+          let txt = data.house.name
+          if (data.house.check_in) txt += ` · ${data.house.check_in}`
+          return txt
+        }
+        if (data.candidateCount > 0) return `Not booked yet · ${data.candidateCount} candidate${data.candidateCount > 1 ? 's' : ''}`
+        return 'Add your first candidate'
+      },
+    },
+    {
+      emoji: '💬',
+      title: 'Messages',
+      to: '/board',
+      preview: () => {
+        if (!data.latestMsg) return 'No messages yet'
+        const body = data.latestMsg.body || ''
+        const snippet = body.length > 40 ? body.slice(0, 40) + '...' : body
+        return `'${snippet}' — ${data.latestMsg.family_name}, ${relativeTime(data.latestMsg.created_at)}`
+      },
+    },
+  ]
+
+  return (
+    <section className="px-4 max-w-2xl mx-auto mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {tiles.map((tile) => (
+          <Link
+            key={tile.to}
+            to={tile.to}
+            className="block bg-white/50 border border-[#78350F]/10 rounded-xl p-4 hover:border-[#C2410C]/40 hover:shadow-md transition-all min-h-[80px]"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xl">{tile.emoji}</span>
+              <span className="font-display font-bold text-[#2A2118] text-sm">{tile.title}</span>
+            </div>
+            {loading ? (
+              <div className="h-3 w-2/3 bg-[#78350F]/10 rounded animate-pulse mt-1" />
+            ) : (
+              <p className="text-[#78350F] text-xs leading-snug">{tile.preview()}</p>
+            )}
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export default function Landing() {
   return (
@@ -47,9 +159,17 @@ export default function Landing() {
       </div>
 
       {/* Race */}
-      <main className="px-4 pb-12">
+      <main className="px-4 pb-8">
         <WoollyWormRace />
       </main>
+
+      {/* Quick Links */}
+      <div className="flex items-center gap-3 px-6 max-w-2xl mx-auto mb-6">
+        <div className="flex-1 h-px bg-[#78350F] opacity-30" />
+        <span className="text-[#78350F] text-xs uppercase tracking-widest font-medium">Quick Links</span>
+        <div className="flex-1 h-px bg-[#78350F] opacity-30" />
+      </div>
+      <QuickLinks />
 
       {/* Footer */}
       <footer className="border-t border-[#78350F]/20 py-4 text-center">
