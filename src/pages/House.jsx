@@ -10,7 +10,6 @@ export default function House() {
   const [editing, setEditing] = useState(null)
   const [candidates, setCandidates] = useState([])
   const [candidateForm, setCandidateForm] = useState(null)
-  const [ogFetching, setOgFetching] = useState(false)
   const [expandedComments, setExpandedComments] = useState({})
   const [comments, setComments] = useState({})
   const [commentInputs, setCommentInputs] = useState({})
@@ -82,25 +81,6 @@ export default function House() {
       check_out: house?.check_out || '',
       notes: house?.notes || '',
     })
-  }
-
-  // --- OG fetch ---
-  async function fetchOg(url) {
-    setOgFetching(true)
-    try {
-      const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(url)}`)
-      const data = await res.json()
-      setCandidateForm((prev) => ({
-        ...prev,
-        name: prev.name || data.title || '',
-        image_url: prev.image_url || data.imageUrl || '',
-        bedrooms: prev.bedrooms || (data.bedrooms != null ? String(data.bedrooms) : ''),
-        bathrooms: prev.bathrooms || (data.bathrooms != null ? String(data.bathrooms) : ''),
-        beds: prev.beds || (data.beds != null ? String(data.beds) : ''),
-        sleeping_areas: prev.sleeping_areas || (data.sleepingAreas != null ? String(data.sleepingAreas) : ''),
-      }))
-    } catch { /* ignore */ }
-    setOgFetching(false)
   }
 
   // --- Candidate CRUD ---
@@ -389,14 +369,9 @@ export default function House() {
               placeholder="Paste the Airbnb/VRBO link"
               value={candidateForm.listing_url}
               onChange={(e) => setCandidateForm({ ...candidateForm, listing_url: e.target.value })}
-              onBlur={() => {
-                if (candidateForm.listing_url && !candidateForm.id) fetchOg(candidateForm.listing_url)
-              }}
-              className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-1 text-sm"
+              className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm"
               autoFocus
             />
-            {ogFetching && <p className="text-xs text-[#D97706] mb-2">Fetching listing info...</p>}
-            {!ogFetching && <div className="mb-2" />}
 
             <label className="block text-sm font-medium text-[#78350F] mb-1">Name</label>
             <input type="text" placeholder="e.g. Cozy Mountain Cabin" value={candidateForm.name} onChange={(e) => setCandidateForm({ ...candidateForm, name: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm" />
