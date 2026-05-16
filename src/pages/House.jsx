@@ -94,6 +94,10 @@ export default function House() {
         ...prev,
         name: prev.name || data.title || '',
         image_url: prev.image_url || data.imageUrl || '',
+        bedrooms: prev.bedrooms || (data.bedrooms != null ? String(data.bedrooms) : ''),
+        bathrooms: prev.bathrooms || (data.bathrooms != null ? String(data.bathrooms) : ''),
+        beds: prev.beds || (data.beds != null ? String(data.beds) : ''),
+        sleeping_areas: prev.sleeping_areas || (data.sleepingAreas != null ? String(data.sleepingAreas) : ''),
       }))
     } catch { /* ignore */ }
     setOgFetching(false)
