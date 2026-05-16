@@ -416,7 +416,24 @@ function CandidateCard({ candidate: c, comments, isExpanded, commentInput, famil
           </div>
 
           {c.address && <p className="text-[#78350F] text-sm mt-0.5">{c.address}</p>}
-          {c.price_per_night && <p className="text-[#2A2118] font-bold text-sm mt-1">${c.price_per_night}/night</p>}
+
+          {/* Spec strip */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm mt-1">
+            {c.total_price && (
+              <span className="font-bold text-[#2A2118]">Total: ${Number(c.total_price).toLocaleString()}</span>
+            )}
+            {c.total_price && (
+              <span className="text-[#78350F]">${Math.round(Number(c.total_price) / 3).toLocaleString()}/family &divide; 3</span>
+            )}
+            {(() => {
+              const specs = []
+              if (c.bedrooms) specs.push(`${c.bedrooms} BR`)
+              if (c.sleeping_areas) specs.push(`${c.sleeping_areas} sleeping area${c.sleeping_areas > 1 ? 's' : ''}`)
+              if (c.beds) specs.push(`${c.beds} bed${c.beds > 1 ? 's' : ''}`)
+              if (c.bathrooms) specs.push(`${c.bathrooms} BA`)
+              return specs.length > 0 ? <span className="text-[#78350F]">{specs.join(' · ')}</span> : null
+            })()}
+          </div>
 
           <div className="flex items-center gap-2 mt-1">
             <FamilyBadge family={c.added_by} small />
