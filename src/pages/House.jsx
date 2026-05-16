@@ -93,7 +93,7 @@ export default function House() {
       total_price: candidateForm.total_price ? Number(candidateForm.total_price) : null,
       bedrooms: candidateForm.bedrooms ? Number(candidateForm.bedrooms) : null,
       sleeping_areas: candidateForm.sleeping_areas ? Number(candidateForm.sleeping_areas) : null,
-      beds: candidateForm.beds ? Number(candidateForm.beds) : null,
+      sleeps: candidateForm.sleeps ? Number(candidateForm.sleeps) : null,
       bathrooms: candidateForm.bathrooms ? Number(candidateForm.bathrooms) : null,
       image_url: candidateForm.image_url || null,
       notes: candidateForm.notes || null,
@@ -232,7 +232,7 @@ export default function House() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-2xl font-bold text-[#2A2118]">House Candidates</h2>
         <button
-          onClick={() => setCandidateForm({ listing_url: '', name: '', address: '', total_price: '', bedrooms: '', sleeping_areas: '', beds: '', bathrooms: '', image_url: '', notes: '' })}
+          onClick={() => setCandidateForm({ listing_url: '', name: '', address: '', total_price: '', bedrooms: '', sleeping_areas: '', sleeps: '', bathrooms: '', image_url: '', notes: '' })}
           className="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-bold hover:bg-[#B91C1C] transition-colors"
         >
           + Add candidate
@@ -251,7 +251,7 @@ export default function House() {
             <option value="price_asc">Total price: low → high</option>
             <option value="price_desc">Total price: high → low</option>
             <option value="per_family">Per-family price: low → high</option>
-            <option value="beds">Most beds</option>
+            <option value="sleeps">Sleeps most</option>
             <option value="bedrooms">Most bedrooms</option>
           </select>
         </div>
@@ -284,11 +284,11 @@ export default function House() {
                 if (!b.total_price) return -1
                 return Number(a.total_price) / 3 - Number(b.total_price) / 3
               },
-              beds: () => {
-                if (!a.beds && !b.beds) return 0
-                if (!a.beds) return 1
-                if (!b.beds) return -1
-                return Number(b.beds) - Number(a.beds)
+              sleeps: () => {
+                if (!a.sleeps && !b.sleeps) return 0
+                if (!a.sleeps) return 1
+                if (!b.sleeps) return -1
+                return Number(b.sleeps) - Number(a.sleeps)
               },
               bedrooms: () => {
                 if (!a.bedrooms && !b.bedrooms) return 0
@@ -314,7 +314,7 @@ export default function House() {
                 id: c.id, listing_url: c.listing_url, name: c.name || '',
                 address: c.address || '', total_price: c.total_price || '',
                 bedrooms: c.bedrooms || '', sleeping_areas: c.sleeping_areas || '',
-                beds: c.beds || '', bathrooms: c.bathrooms || '',
+                sleeps: c.sleeps || '', bathrooms: c.bathrooms || '',
                 image_url: c.image_url || '', notes: c.notes || '',
               })}
               onDelete={() => handleDeleteCandidate(c.id)}
@@ -392,8 +392,8 @@ export default function House() {
                 <input type="number" placeholder="0" value={candidateForm.sleeping_areas} onChange={(e) => setCandidateForm({ ...candidateForm, sleeping_areas: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#78350F] mb-1">Total beds</label>
-                <input type="number" placeholder="0" value={candidateForm.beds} onChange={(e) => setCandidateForm({ ...candidateForm, beds: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-[#78350F] mb-1">Sleeps</label>
+                <input type="number" placeholder="e.g. 12" value={candidateForm.sleeps} onChange={(e) => setCandidateForm({ ...candidateForm, sleeps: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#78350F] mb-1">Bathrooms</label>
@@ -462,7 +462,7 @@ function CandidateCard({ candidate: c, comments, isExpanded, commentInput, famil
               const specs = []
               if (c.bedrooms) specs.push(`${c.bedrooms} BR`)
               if (c.sleeping_areas) specs.push(`${c.sleeping_areas} sleeping area${c.sleeping_areas > 1 ? 's' : ''}`)
-              if (c.beds) specs.push(`${c.beds} bed${c.beds > 1 ? 's' : ''}`)
+              if (c.sleeps) specs.push(`Sleeps ${c.sleeps}`)
               if (c.bathrooms) specs.push(`${c.bathrooms} BA`)
               return specs.length > 0 ? <span className="text-[#78350F]">{specs.join(' · ')}</span> : null
             })()}

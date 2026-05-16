@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     ]
     if (botSignatures.some((sig) => headSnippet.includes(sig))) {
       console.log(`OG fetch: bot-protection page detected for ${url}`)
-      return res.status(200).json({ imageUrl: null, title: null, bedrooms: null, bathrooms: null, beds: null, sleepingAreas: null })
+      return res.status(200).json({ imageUrl: null, title: null, bedrooms: null, bathrooms: null, sleeps: null, sleepingAreas: null })
     }
 
     // Parse OG image
@@ -54,11 +54,11 @@ export default async function handler(req, res) {
       title: ogTitleMatch?.[1] || null,
       bedrooms: structured.bedrooms,
       bathrooms: structured.bathrooms,
-      beds: structured.beds,
+      sleeps: structured.sleeps,
       sleepingAreas: structured.sleepingAreas,
     })
   } catch {
-    return res.status(200).json({ imageUrl: null, title: null, bedrooms: null, bathrooms: null, beds: null, sleepingAreas: null })
+    return res.status(200).json({ imageUrl: null, title: null, bedrooms: null, bathrooms: null, sleeps: null, sleepingAreas: null })
   }
 }
 
@@ -71,7 +71,7 @@ function clamp(value, min, max) {
 function extractStructuredData(html) {
   let bedrooms = null
   let bathrooms = null
-  let beds = null
+  let sleeps = null
   let sleepingAreas = null
 
   // 1. JSON-LD extraction
@@ -110,8 +110,8 @@ function extractStructuredData(html) {
       if (bathrooms === null) {
         bathrooms = clamp(obj.numberOfBathroomsTotal || obj.numberOfBathroomsRoom || obj.numberOfBathrooms, 0.5, 20)
       }
-      if (beds === null) {
-        beds = clamp(obj.numberOfBeds || obj.bed?.numberOfBeds, 1, 50)
+      if (sleeps === null) {
+        sleeps = clamp(obj.numberOfBeds || obj.bed?.numberOfBeds, 1, 50)
       }
     }
 
@@ -129,10 +129,10 @@ function extractStructuredData(html) {
     const metaBathrooms = html.match(/<meta[^>]*name=["'](?:vrbo|airbnb):bathrooms["'][^>]*content=["']([^"']+)["']/i)
     if (metaBathrooms) bathrooms = clamp(metaBathrooms[1], 0.5, 20)
   }
-  if (beds === null) {
+  if (sleeps === null) {
     const metaBeds = html.match(/<meta[^>]*name=["'](?:vrbo|airbnb):beds["'][^>]*content=["']([^"']+)["']/i)
-    if (metaBeds) beds = clamp(metaBeds[1], 1, 50)
+    if (metaBeds) sleeps = clamp(metaBeds[1], 1, 50)
   }
 
-  return { bedrooms, bathrooms, beds, sleepingAreas }
+  return { bedrooms, bathrooms, sleeps, sleepingAreas }
 }
