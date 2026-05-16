@@ -22,15 +22,13 @@ export default async function handler(req, res) {
     const html = await response.text()
 
     // Detect bot-protection interstitial pages
-    const headSnippet = html.slice(0, 5000).toLowerCase()
+    const headSnippet = html.slice(0, 2000).toLowerCase()
     const botSignatures = [
-      'security challenge',
-      'checking your browser',
       'cf-browser-verification',
+      'cf-chl-bypass',
       '<title>just a moment',
+      '<title>attention required',
       'ddos protection by cloudflare',
-      'please enable cookies',
-      'captcha',
     ]
     if (botSignatures.some((sig) => headSnippet.includes(sig))) {
       console.log(`OG fetch: bot-protection page detected for ${url}`)
