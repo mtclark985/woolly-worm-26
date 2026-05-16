@@ -14,6 +14,7 @@ export default function House() {
   const [expandedComments, setExpandedComments] = useState({})
   const [comments, setComments] = useState({})
   const [commentInputs, setCommentInputs] = useState({})
+  const [sortBy, setSortBy] = useState(() => localStorage.getItem('house_candidates_sort') || 'recent')
   const family = getFamily()
 
   // --- House data ---
@@ -254,13 +255,66 @@ export default function House() {
         </button>
       </div>
 
+      {candidates.length > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <label className="text-sm text-[#78350F] font-medium">Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); localStorage.setItem('house_candidates_sort', e.target.value) }}
+            className="border border-[#78350F]/30 rounded-lg px-2 py-1 text-sm bg-white text-[#2A2118]"
+          >
+            <option value="recent">Recently added</option>
+            <option value="price_asc">Total price: low → high</option>
+            <option value="price_desc">Total price: high → low</option>
+            <option value="per_family">Per-family price: low → high</option>
+            <option value="beds">Most beds</option>
+            <option value="bedrooms">Most bedrooms</option>
+          </select>
+        </div>
+      )}
+
       {candidates.length === 0 ? (
         <div className="bg-white/50 rounded-xl p-8 border border-[#78350F]/10 text-center">
           <p className="text-[#78350F]">No candidates yet. Add a rental you&apos;re considering.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {candidates.map((c) => (
+          {[...candidates].sort((a, b) => {
+            const sortFns = {
+              recent: () => new Date(b.created_at) - new Date(a.created_at),
+              price_asc: () => {
+                if (!a.total_price && !b.total_price) return 0
+                if (!a.total_price) return 1
+                if (!b.total_price) return -1
+                return Number(a.total_price) - Number(b.total_price)
+              },
+              price_desc: () => {
+                if (!a.total_price && !b.total_price) return 0
+                if (!a.total_price) return 1
+                if (!b.total_price) return -1
+                return Number(b.total_price) - Number(a.total_price)
+              },
+              per_family: () => {
+                if (!a.total_price && !b.total_price) return 0
+                if (!a.total_price) return 1
+                if (!b.total_price) return -1
+                return Number(a.total_price) / 3 - Number(b.total_price) / 3
+              },
+              beds: () => {
+                if (!a.beds && !b.beds) return 0
+                if (!a.beds) return 1
+                if (!b.beds) return -1
+                return Number(b.beds) - Number(a.beds)
+              },
+              bedrooms: () => {
+                if (!a.bedrooms && !b.bedrooms) return 0
+                if (!a.bedrooms) return 1
+                if (!b.bedrooms) return -1
+                return Number(b.bedrooms) - Number(a.bedrooms)
+              },
+            }
+            return (sortFns[sortBy] || sortFns.recent)()
+          }).map((c) => (
             <CandidateCard
               key={c.id}
               candidate={c}
