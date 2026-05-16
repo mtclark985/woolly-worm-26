@@ -105,7 +105,11 @@ export default function House() {
       name: candidateForm.name || null,
       listing_url: candidateForm.listing_url,
       address: candidateForm.address || null,
-      price_per_night: candidateForm.price_per_night ? Number(candidateForm.price_per_night) : null,
+      total_price: candidateForm.total_price ? Number(candidateForm.total_price) : null,
+      bedrooms: candidateForm.bedrooms ? Number(candidateForm.bedrooms) : null,
+      sleeping_areas: candidateForm.sleeping_areas ? Number(candidateForm.sleeping_areas) : null,
+      beds: candidateForm.beds ? Number(candidateForm.beds) : null,
+      bathrooms: candidateForm.bathrooms ? Number(candidateForm.bathrooms) : null,
       image_url: candidateForm.image_url || null,
       notes: candidateForm.notes || null,
       added_by: family,
@@ -243,7 +247,7 @@ export default function House() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-2xl font-bold text-[#2A2118]">House Candidates</h2>
         <button
-          onClick={() => setCandidateForm({ listing_url: '', name: '', address: '', price_per_night: '', image_url: '', notes: '' })}
+          onClick={() => setCandidateForm({ listing_url: '', name: '', address: '', total_price: '', bedrooms: '', sleeping_areas: '', beds: '', bathrooms: '', image_url: '', notes: '' })}
           className="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-bold hover:bg-[#B91C1C] transition-colors"
         >
           + Add candidate
@@ -270,7 +274,9 @@ export default function House() {
               onPostComment={() => postComment(c.id)}
               onEdit={() => setCandidateForm({
                 id: c.id, listing_url: c.listing_url, name: c.name || '',
-                address: c.address || '', price_per_night: c.price_per_night || '',
+                address: c.address || '', total_price: c.total_price || '',
+                bedrooms: c.bedrooms || '', sleeping_areas: c.sleeping_areas || '',
+                beds: c.beds || '', bathrooms: c.bathrooms || '',
                 image_url: c.image_url || '', notes: c.notes || '',
               })}
               onDelete={() => handleDeleteCandidate(c.id)}
@@ -340,8 +346,27 @@ export default function House() {
             <label className="block text-sm font-medium text-[#78350F] mb-1">Address</label>
             <input type="text" placeholder="Full address" value={candidateForm.address} onChange={(e) => setCandidateForm({ ...candidateForm, address: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm" />
 
-            <label className="block text-sm font-medium text-[#78350F] mb-1">Price per night ($)</label>
-            <input type="number" placeholder="e.g. 250" value={candidateForm.price_per_night} onChange={(e) => setCandidateForm({ ...candidateForm, price_per_night: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm" />
+            <label className="block text-sm font-medium text-[#78350F] mb-1">Total cost ($)</label>
+            <input type="number" step="any" placeholder="e.g. 4200" value={candidateForm.total_price} onChange={(e) => setCandidateForm({ ...candidateForm, total_price: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm" />
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-sm font-medium text-[#78350F] mb-1">Bedrooms</label>
+                <input type="number" placeholder="0" value={candidateForm.bedrooms} onChange={(e) => setCandidateForm({ ...candidateForm, bedrooms: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#78350F] mb-1">Sleeping areas (loft, nook, bunk room)</label>
+                <input type="number" placeholder="0" value={candidateForm.sleeping_areas} onChange={(e) => setCandidateForm({ ...candidateForm, sleeping_areas: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#78350F] mb-1">Total beds</label>
+                <input type="number" placeholder="0" value={candidateForm.beds} onChange={(e) => setCandidateForm({ ...candidateForm, beds: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#78350F] mb-1">Bathrooms</label>
+                <input type="number" step="any" placeholder="e.g. 2.5" value={candidateForm.bathrooms} onChange={(e) => setCandidateForm({ ...candidateForm, bathrooms: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 text-sm" />
+              </div>
+            </div>
 
             <label className="block text-sm font-medium text-[#78350F] mb-1">Image URL</label>
             <input type="url" placeholder="Auto-filled from listing, or paste manually" value={candidateForm.image_url} onChange={(e) => setCandidateForm({ ...candidateForm, image_url: e.target.value })} className="w-full border border-[#78350F]/30 rounded-lg px-3 py-2 mb-3 text-sm" />
