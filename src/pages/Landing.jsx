@@ -4,6 +4,7 @@ import Countdown from '../components/Countdown'
 import WoollyWormRace from '../components/WoollyWormRace'
 import WeatherWidget from '../components/WeatherWidget'
 import { supabase } from '../lib/supabase'
+import { getTripDates } from '../lib/tripConfig'
 
 function useQuickLinks() {
   const [data, setData] = useState({ meals: null, house: null, messages: null })
@@ -56,10 +57,11 @@ function QuickLinks() {
       title: 'Meal Planning',
       to: '/meals',
       preview: () => {
+        const totalSlots = getTripDates().length * 3
         if (!data.meals) return null
-        if (data.meals.length === 0) return 'Sign up to cook'
         const claimed = data.meals.filter((m) => m.claimed_by).length
-        return `${claimed} of ${data.meals.length} slots claimed`
+        if (claimed === 0) return 'Sign up to cook'
+        return `${claimed} of ${totalSlots} slots claimed`
       },
     },
     {
